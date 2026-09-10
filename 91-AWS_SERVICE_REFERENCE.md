@@ -324,7 +324,7 @@ The distinction is authentication (user pools) versus AWS authorisation (identit
 
 # How this pairs with the rest of the library
 
-- **№54** — the exam-oriented companion: domains, decision tables, question patterns, and a study plan for SAA-C03 and DVA-C02. Use this document to *understand* a service; use that one to *choose between* services under a constraint.
+- **№54** — the companion primer: the services that matter grouped by category, and the decision frameworks for choosing between them. Use this document to *understand* a service; use that one to *choose between* services under a constraint.
 - **№51 Networking** — the protocol foundations under VPC, ELB, Route 53, CloudFront and TLS. Read it first if the networking cards feel thin on *why*.
 - **№31 Distributed Systems** — the concepts under SQS, SNS, Kinesis, Step Functions, caching and multi-AZ design.
 - **№50 Docker** — the container model under ECR, ECS, Fargate and EKS.

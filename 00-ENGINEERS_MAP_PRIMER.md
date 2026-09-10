@@ -2,7 +2,7 @@
 
 *The one-stop mental model of what software engineering actually is: the CS foundations nobody taught you formally, and the craft that separates competent from good. Built to fill years of rust. Practiq lens throughout. Written July 2026; the one genuinely volatile fact (Terraform's licensing, §13) is verified.*
 
-This is a **map, not a manual**. It covers a lot of ground at "I understand what this is, why it matters, and when it bites" depth — enough to reason, to make decisions, and to hold your own in an interview — and points you at deeper material where you have it. It does **not** re-run the six documents you already have; where a topic is covered there in depth, this map gives you the connective idea and sends you on.
+This is a **map, not a manual**. It covers a lot of ground at "I understand what this is, why it matters, and when it bites" depth — enough to reason, to make decisions, and to know when you are out of your depth — and points you at deeper material where you have it. It does **not** re-run the six documents you already have; where a topic is covered there in depth, this map gives you the connective idea and sends you on.
 
 **Your existing library (this doc points at these for depth):**
 
@@ -104,7 +104,7 @@ The lesson lives in that last column: O(n²) is fine for 100 items and catastrop
 
 Also track **space complexity** (memory growth) and know that Big-O hides constants and cache effects (§1.2) — which is why a "slower" O(n) array scan often beats a "faster" O(1) linked-list operation in practice.
 
-> **The tell — the interview and the job:** the practical skill is spotting the accidental O(n²) — a loop that calls `list.contains()` inside it (that's O(n) inside O(n)). The fix is almost always "put it in a `HashSet`/`HashMap` first." If you find yourself scanning a collection inside a loop over another, stop and hash.
+> **The tell — algorithmic cost in practice:** the practical skill is spotting the accidental O(n²) — a loop that calls `list.contains()` inside it (that's O(n) inside O(n)). The fix is almost always "put it in a `HashSet`/`HashMap` first." If you find yourself scanning a collection inside a loop over another, stop and hash.
 
 ## 2.2 The data structures, and their costs
 
@@ -132,9 +132,9 @@ Not to implement from scratch, but to recognise and reason about:
 - **Graph traversal:** **BFS** (breadth-first, uses a queue, finds shortest unweighted path) and **DFS** (depth-first, uses a stack/recursion). Shortest weighted path is **Dijkstra**. You'll meet these as "find connected things" / "shortest route" / "dependency order" (topological sort).
 - **Recursion & divide-and-conquer:** a function calling itself on a smaller input, with a base case. Elegant for trees and naturally-recursive problems; watch the stack (deep recursion → `StackOverflowError`).
 - **Dynamic programming:** the one that intimidates — it's just "cache the answers to subproblems so you don't recompute them" (memoisation). Recognise it as "brute force with overlapping subproblems, made fast by remembering."
-- **Two pointers / sliding window / greedy:** common interview patterns; each is a trick for turning an O(n²) scan into O(n).
+- **Two pointers / sliding window / greedy:** each is a trick for turning an O(n²) scan into O(n); §30 covers the full set.
 
-> **The tell — CS depth:** for the job, "choose the right structure, don't write accidental O(n²), know when a round trip dominates" is 90% of it. For interviews, the LeetCode-style patterns (hash for lookups, two pointers, BFS/DFS, sliding window, basic DP) are worth drilling *as patterns to recognise*, not algorithms to memorise. You are not being tested on inventing quicksort.
+> **The tell — CS depth:** "choose the right structure, don't write accidental O(n²), know when a round trip dominates" is 90% of what this ever costs you in practice. The named patterns (hash for lookups, two pointers, BFS/DFS, sliding window, basic DP) are worth knowing *as shapes to recognise* rather than algorithms to reproduce; №30 covers them properly. Nobody invents quicksort under pressure, and nobody needs to.
 
 ---
 
@@ -632,7 +632,7 @@ The field moves; the fundamentals don't. This whole document is fundamentals —
 # Where to go from here
 
 - **Depth on the topics you have:** the six documents indexed at the top. This map points into them throughout.
-- **The obvious remaining gaps** (candidates for their own docs, whenever you want them): **Linux/the command line** (processes, permissions, the shell, systemd, the tools), **Git** (the model, branching, rebasing, resolving the mess), and a **tool catalogue** (the "trading cards" — one card per tool per problem-category, with AWS equivalents — which is the natural companion to this map and coming next).
-- **How to use this in interview prep:** every part maps to your drill categories. The highest-value framing for interviews is §15.1 — almost every good answer to "how would you design/choose X?" is *name the options, name the trade-off, make a justified call.* Recite less; reason more.
+- **Where the depth now lives:** Linux and the command line is №52, Git is №53, and the tool catalogue is №90. This map predates all three and points at them rather than repeating them.
+- **The framing to carry out of this document:** §15.1. Almost every useful answer to "how would you design or choose X?" has the same shape — *name the options, name the trade-off, make a justified call.* A map is only worth having if it changes what you do at the junctions.
 
 *Caveat: this is a breadth-first map written from knowledge; the fundamentals are stable. The one high-drift fact — Terraform's licensing and the OpenTofu/IBM situation (§13.3) — was verified July 2026. For any specific current tool version or AWS behaviour, check before relying on it, and the tool-catalogue doc will carry that verification.*

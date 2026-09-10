@@ -217,7 +217,7 @@ You get: local reasoning and clean boundaries, one deploy, ACID transactions, on
 
 ## 4.5 Where Practiq sits, and why it's right
 
-Your documented plan — **monolith-first with a documented target service split** (`practiq-api`, `practiq-processor`, `practiq-extractor`, `practiq-frontend`, `practiq-infrastructure`) — is the correct architecture for a solo project at your scale, and defensible in any interview (№43 §9).
+Your documented plan — **monolith-first with a documented target service split** (`practiq-api`, `practiq-processor`, `practiq-extractor`, `practiq-frontend`, `practiq-infrastructure`) — is the correct architecture for a solo project at your scale, and defensible on its merits (№43 §9).
 
 The reasoning worth being able to state: you are one developer, so there is no coordination problem to solve; your traffic is a few requests per second, so there is no scaling problem to solve; and your review workflow benefits from real transactions. Meanwhile the *one* component with a genuinely different profile — the **extractor** (different runtime, different language, bursty, slow, retryable, failure-tolerant) — is already separated, which is exactly right: **split where the seam is real, not on principle.**
 
@@ -389,7 +389,7 @@ The pattern for replacing a system without a big-bang rewrite: put a facade in f
 
 # How to expand this
 
-- *Related:* №41 Software Design (the same thinking at object level — coupling, cohesion, DDD aggregates as service-boundary candidates); №40 Clean Code (at function level); №31 Distributed Systems (everything microservices inherit); №43 System Design (architecture under interview conditions); №44 Testing (fitness functions, testability as an architectural property); №20 §2.4 (transaction boundaries as an application-layer concern).
+- *Related:* №41 Software Design (the same thinking at object level — coupling, cohesion, DDD aggregates as service-boundary candidates); №40 Clean Code (at function level); №31 Distributed Systems (everything microservices inherit); №43 System Design (the same decisions taken from requirements to a design); №44 Testing (fitness functions, testability as an architectural property); №20 §2.4 (transaction boundaries as an application-layer concern).
 - *Candidates for deeper treatment:* **a modular-monolith blueprint for Practiq** with enforced boundaries and ArchUnit rules; **event-driven architecture and event sourcing** properly; **the C4 model** for documenting architecture; **migration patterns** (strangler fig, branch by abstraction) worked through.
 
 *Stable material, written from knowledge — layering, the dependency rule, the monolith/services trade-off and decision records don't drift. The canonical sources: Evans and Vernon for DDD-informed boundaries, Fowler's writing on monoliths and microservices, Ford et al.* Building Evolutionary Architectures *for fitness functions.*

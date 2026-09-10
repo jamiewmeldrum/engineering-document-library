@@ -1,8 +1,8 @@
 # Algorithms, Data Structures & Problem-Solving Patterns — A Primer
 
-*The formal-CS training you skipped, done practically, and the single biggest interview lever you don't already have. Where the Collections reference gives you the Java data structures and their costs, this gives you the **reasoning** — how to measure cost, how to map a problem to a structure, and the dozen **patterns** that turn "I have no idea" into "oh, this is a sliding-window problem." Java snippets throughout; the ideas are language-agnostic.*
+*The formal-CS training you skipped, done practically. Where №11 gives you the Java data structures and their costs, this gives you the **reasoning** — how to measure cost, how to map a problem to a structure, and the dozen **patterns** that turn "I have no idea" into "oh, this is a sliding-window problem." Java snippets throughout; the ideas are language-agnostic.*
 
-The uncomfortable truth about coding interviews: they don't test whether you can code (you can) — they test whether you can **recognise which of about a dozen patterns a problem is**, and reason about the cost. Nobody invents quicksort under pressure. What separates a pass from a fail is seeing "find a pair that sums to a target" and instantly thinking *hash map* or *two pointers*, then knowing that takes it from O(n²) to O(n). That recognition is learnable, and it's most of what this document teaches.
+Almost nobody solves an algorithmic problem by inventing an algorithm. What actually happens is **recognition**: seeing "find a pair that sums to a target" and thinking *hash map* or *two pointers*, then knowing that takes it from O(n²) to O(n). There are roughly a dozen shapes that cover the large majority of problems you will meet, and the skill is matching a problem to its shape quickly enough that the implementation becomes the easy part. That recognition is learnable, and it is most of what this document teaches.
 
 The one idea underneath everything: **almost every optimisation is a trade of space for time or a pre-arrangement that unlocks a shortcut.** A hash map spends memory to make lookups instant. Sorting spends O(n log n) up front to make binary search, two-pointers, and greedy possible. Once you see problems through that lens — *"what could I pre-compute or pre-arrange to make the expensive part cheap?"* — the patterns become variations on a theme.
 
@@ -11,10 +11,10 @@ Contents:
 - **Part 1** — Big-O: measuring cost (the one piece of theory you must own)
 - **Part 2** — data structures as tools: the problem → structure mapping
 - **Part 3** — the core algorithms: recognise and reason
-- **Part 4** — the problem-solving patterns (the interview core)
+- **Part 4** — the problem-solving patterns: the dozen shapes worth knowing
 - **Part 5** — how to solve a coding problem: the method
 - **Part 6** — the recognition guide: problem-smell → pattern
-- **Part 7** — what matters for the interview vs the job
+- **Part 7** — where this actually matters in production code
 
 ## Pattern index — the smell → the pattern
 
@@ -39,7 +39,7 @@ The single most useful table here. When a problem has one of these shapes, reach
 | "balanced parens / undo / nesting / evaluate expression" | **stack** | §2 |
 | "process in order they arrived" | **queue** | §2 |
 
-If you internalise one thing from this document, make it this table. In an interview, silently matching the problem to a row is 80% of the battle.
+If you internalise one thing from this document, make it this table. Matching a problem to a row is most of the work; the code that follows is short.
 
 ---
 
@@ -92,13 +92,13 @@ for (Question q : questions)
     if (approvedSet.contains(q)) ...      // O(1) each → O(n) total
 ```
 
-That last transformation — spotting `list.contains()` inside a loop and hoisting to a `HashSet` — is *the* most common real-world and interview optimisation. Learn to see it on sight.
+That last transformation — spotting `list.contains()` inside a loop and hoisting to a `HashSet` — is *the* most common optimisation in real code. Learn to see it on sight.
 
 ## 1.4 Space complexity, amortised, and best/average/worst
 
 - **Space complexity** measures *memory* growth the same way. A hash map that stores every element to gain O(1) lookups costs O(n) *space* — that's the trade. Recursion costs stack space proportional to its depth.
 - **Amortised** cost averages over a sequence. `ArrayList.add` is *usually* O(1), but occasionally O(n) when it doubles its capacity and copies — averaged over many adds, it's **amortised O(1)**. Same story for `HashMap` resizing (Collections reference §4.1).
-- **Best / average / worst.** Quicksort is O(n log n) average but O(n²) worst case (a pathological pivot). Hash-map lookup is O(1) average but O(n) worst (everything collides). Interviewers usually want **worst case**; say which you mean.
+- **Best / average / worst.** Quicksort is O(n log n) average but O(n²) worst case (a pathological pivot). Hash-map lookup is O(1) average but O(n) worst (everything collides). Analysis conventions usually mean **worst case**; say which you mean.
 
 > **The tell — Big-O:** the practical skill is spotting the accidental O(n²) — a linear search nested in a loop — and knowing the fix is almost always "hash it" or "sort it first." And keep perspective: for n ≤ ~100, an O(n²) solution is *fine* and often clearer; complexity only matters at scale. State your complexity, then say whether it matters for the expected input size.
 
@@ -123,7 +123,7 @@ You have the Java specifics in the Collections reference (costs, `HashMap` inter
 
 ## 2.1 The two power tools
 
-Two of these do the heavy lifting in interview problems, and both are the "trade space/prep for speed" idea:
+Two of these do the heavy lifting, and both are the "trade space/prep for speed" idea:
 
 **The hash table** turns "is X here?" and "what maps to X?" from an O(n) scan into an O(1) lookup, by spending O(n) memory. It is the *first thing to reach for* when a brute force does repeated searching. Half the pattern index above is really "use a hash map."
 
@@ -134,7 +134,7 @@ Two of these do the heavy lifting in interview problems, and both are the "trade
 - A **tree** is a graph with no cycles and one path between any two nodes (a hierarchy). **Binary search trees** keep left < node < right, giving O(log n) search *if balanced* — and "if balanced" is the catch, which is why production uses self-balancing variants (red-black), and why `TreeMap` is O(log n) guaranteed.
 - A **graph** is nodes + edges, directed or not, weighted or not. It models anything relational: your `Concept ↔ SpecSection ↔ Question` web, a road network, a dependency graph. Represented as an **adjacency list** (`Map<Node, List<Node>>` — good for sparse graphs, the usual) or adjacency matrix (dense). Almost every "graph problem" is solved by BFS, DFS, or a shortest-path algorithm (§3.4).
 
-> **The tell — structures:** the interview move is recognising which structure removes the bottleneck. "Repeated lookups?" → hash. "Need order or ranges?" → tree/sorted. "Min/max repeatedly?" → heap. "Relationships/paths?" → graph. Choosing right often collapses the whole problem.
+> **The tell — structures:** the move is recognising which structure removes the bottleneck. "Repeated lookups?" → hash. "Need order or ranges?" → tree/sorted. "Min/max repeatedly?" → heap. "Relationships/paths?" → graph. Choosing right often collapses the whole problem.
 
 ---
 
@@ -160,7 +160,7 @@ int binarySearch(int[] a, int target) {
 }
 ```
 
-Two details interviewers watch for: `lo + (hi - lo) / 2` (not `(lo + hi) / 2`, which can overflow) and the `<=` loop condition. Binary search is more general than "find in a sorted array" — see §4.6.
+Two details that separate a correct implementation from a subtly broken one: `lo + (hi - lo) / 2` (not `(lo + hi) / 2`, which can overflow) and the `<=` loop condition. Binary search is more general than "find in a sorted array" — see §4.6.
 
 ## 3.2 Sorting
 
@@ -198,7 +198,7 @@ long fib(int n) {
 
 ## 3.6 Greedy
 
-Make the locally-optimal choice at each step and hope it yields the global optimum. Fast and simple *when it works* — and the hard part is proving it does. It works for some problems (interval scheduling: always pick the earliest-finishing; making change with canonical coins) and *fails* for others (change with arbitrary coin sets needs DP). The interview trap is applying greedy where it doesn't hold, so be ready to justify *why* the local choice is safe, or reach for DP instead.
+Make the locally-optimal choice at each step and hope it yields the global optimum. Fast and simple *when it works* — and the hard part is proving it does. It works for some problems (interval scheduling: always pick the earliest-finishing; making change with canonical coins) and *fails* for others (change with arbitrary coin sets needs DP). The trap is applying greedy where it doesn't hold, so be ready to justify *why* the local choice is safe, or reach for DP instead.
 
 > **The tell — core algorithms:** recognise them, don't reinvent them. "Shortest path" isn't a puzzle to solve from scratch — it's "BFS/Dijkstra." "Count the ways with overlapping choices" is "DP." Naming the algorithm is the answer; the code is mechanical once you've named it.
 
@@ -206,7 +206,7 @@ Make the locally-optimal choice at each step and hope it yields the global optim
 
 # Part 4 — The problem-solving patterns
 
-This is the interview core — the dozen shapes that cover the large majority of coding problems. For each: **the smell** that signals it, **the mechanic**, **the cost**, and a snippet. Match the problem to the pattern (via the index at the top) and you've mostly solved it.
+The dozen shapes that cover the large majority of algorithmic problems. For each: **the smell** that signals it, **the mechanic**, **the cost**, and a snippet. Match the problem to the pattern (via the index at the top) and you've mostly solved it.
 
 ## 4.1 Hashing for lookups — the #1 move
 
@@ -342,7 +342,7 @@ Backtracking is inherently exponential (there *are* exponentially many subsets/p
 
 ## 4.9 Dynamic programming
 
-**Smell:** "count the number of ways," "min/max cost/length," "can you reach/make X," *with choices that overlap*. **Mechanic:** §3.5 — define the recurrence (the answer in terms of smaller answers), then memoise. The hard part is *finding the recurrence*; the rest is mechanical. Classic shapes: knapsack (choose items under a constraint), longest common subsequence, coin change, edit distance, grid path counting. In an interview, derive the brute-force recursion first, *then* add memoisation — that's the reliable path, and it shows your working.
+**Smell:** "count the number of ways," "min/max cost/length," "can you reach/make X," *with choices that overlap*. **Mechanic:** §3.5 — define the recurrence (the answer in terms of smaller answers), then memoise. The hard part is *finding the recurrence*; the rest is mechanical. Classic shapes: knapsack (choose items under a constraint), longest common subsequence, coin change, edit distance, grid path counting. In practice, derive the brute-force recursion first, *then* add memoisation — that's the reliable path, and it shows your working.
 
 ## 4.10 Heap / top-K
 
@@ -390,26 +390,26 @@ int find(int x) { return parent[x] == x ? x : (parent[x] = find(parent[x])); }  
 void union(int a, int b) { parent[find(a)] = find(b); }
 ```
 
-> **The tell — patterns:** the win isn't knowing the code (it's short) — it's **recognising the smell fast**. Drill the *mapping* (the pattern index), not the implementations. In the room, name the pattern out loud ("this looks like a sliding-window problem because we want the longest contiguous run") — it shows the interviewer exactly the recognition they're testing for, even before you write a line.
+> **The tell — patterns:** the win isn't knowing the code, which is short, it's **recognising the smell fast**. Learn the *mapping* (the pattern index), not the implementations. Naming the pattern explicitly before you write anything ("this is a sliding window, because we want the longest contiguous run") is what makes the rest of the work mechanical, and it is what makes the code reviewable by someone who did not solve the problem themselves.
 
 ---
 
 # Part 5 — How to solve a coding problem: the method
 
-Recognition gets you the pattern; a *process* gets you a clean solution and the communication marks. Follow these steps out loud — the thinking is what's being assessed, not just the final code.
+Recognition gets you the pattern; a *process* gets you a correct solution instead of a nearly-correct one. The steps below are worth following deliberately, and worth following out loud when someone else is reading along, because most algorithmic mistakes are made in the first two minutes rather than the last ten.
 
-1. **Clarify.** Restate the problem. Ask about constraints: input size (tells you the target complexity — n=10⁶ rules out O(n²)), value ranges, duplicates, empty/null inputs, sorted or not. Interviewers *plant* ambiguity to see if you ask.
+1. **Clarify.** Restate the problem. Pin down the constraints: input size (which tells you the target complexity, since n=10⁶ rules out O(n²)), value ranges, duplicates, empty and null inputs, sorted or not. Ambiguity that goes unexamined here is where wrong solutions come from.
 2. **Work an example by hand.** A concrete small case builds intuition and catches misunderstandings before you code.
-3. **State the brute force.** Say the obvious O(n²) (or exponential) solution first — "the naive approach is to check every pair, which is O(n²)." This is not a weakness; it establishes a baseline and buys thinking time. *Never* stay silent hunting for the clever answer.
+3. **State the brute force.** Name the obvious O(n²) or exponential solution first: "the naive approach is to check every pair, which is O(n²)." This is not a weakness. It establishes the baseline you are trying to beat, and without it you cannot say whether an optimisation is worth its complexity.
 4. **Optimise — find the pattern.** Now ask the productive questions: *What am I recomputing? What could I pre-sort or pre-hash? Which pattern does this smell like?* Match to the index. State the improved complexity before coding.
-5. **Confirm the approach, then code.** Say what you're about to do, then write it cleanly — good names, small steps. Talk while you type.
-6. **Test.** Walk your code through the example. Then hit the **edge cases** (below). Finding your own bug is a strong signal; the interviewer finding it for you is not.
+5. **Commit to the approach, then code.** Decide what you are writing before you write it, then write it cleanly: good names, small steps, no cleverness that you would not want to read again in a year.
+6. **Test.** Walk your code through the example by hand. Then hit the **edge cases** (below). Hand-walking finds the bugs that a happy-path test never will.
 
 **Edge-case checklist** (run this on every problem): empty input, single element, all-duplicates, all-same, already-sorted / reverse-sorted, negatives and zero, integer overflow, the target at the boundaries, and — for graphs/trees — cycles, disconnected parts, and null nodes.
 
 **Complexity as a signal:** the given input size *tells you* the intended complexity. n ≤ 20 → exponential/backtracking is expected. n ≤ 10³ → O(n²) is fine. n ≤ 10⁶ → you need O(n log n) or O(n). n ≤ 10⁹ → O(log n) or O(1), so think binary search or maths. Reading this off the constraints is a pro move.
 
-> **The tell — method:** brute force first, *out loud*, always. Then optimise deliberately by naming what you're recomputing and which pattern removes it. The interview rewards visible, structured reasoning over a silent leap to the perfect answer — and the same discipline (state the baseline, name the trade, justify the improvement) is exactly how you defend a design decision on the job.
+> **The tell — method:** state the brute force first, always, even when the better answer is already obvious. Then optimise deliberately by naming what you are recomputing and which pattern removes it. State the baseline, name the trade, justify the improvement: it is the same discipline that makes a design decision defensible in review, and skipping it is how an unjustified optimisation gets into a codebase and stays there.
 
 ---
 
@@ -438,24 +438,26 @@ The consolidated decision reference. Two lenses: match the **smell** to the patt
 
 ---
 
-# Part 7 — What matters: the interview vs the job
+# Part 7 — Where this actually matters
 
-Two honest, different answers, because they pull slightly differently.
+The temptation with a document like this is to treat it as a self-contained skill, drilled and then filed away. It isn't. In production code the algorithmic content of this document shows up in three specific places, and almost nowhere else.
 
-**For the interview:** it's pattern *recognition* under time pressure. The dozen patterns in Part 4 cover the large majority of coding-round problems; the skill is matching fast and communicating the reasoning (Part 5). Drill the *mapping* (smell → pattern), not rote implementations — you want to *recognise*, then reconstruct the short code. Do enough problems that the smells become reflexive. And keep the honest perspective: **you are not being tested on inventing quicksort or deriving Dijkstra** — you're being tested on recognising "this is a BFS," structuring an answer, and reasoning about cost.
+**Choosing the structure so the operation is cheap.** Most real performance problems are not clever-algorithm problems, they are wrong-container problems: a `List` where a `Set` was needed, a linear scan where a map lookup was available, a sort inside a loop that could have happened once outside it. №11 gives you the costs; Part 2 here gives you the mapping from problem shape to structure. That mapping is the daily use of everything above.
 
-**For the job:** the daily reality is narrower and you already do most of it. It's (1) **choose the right data structure** so operations are cheap (Collections reference), (2) **don't write accidental O(n²)** — the `contains`-in-a-loop trap (§1.3), and (3) **know when a round trip dominates** — the real bottleneck in a backend service is almost never your in-memory algorithm; it's the database query, the N+1, the network call (Engineer's Map §1.2, data-access primer §2.8). A perfectly O(n) loop wrapped around a query in a loop is still slow. The job-relevant instinct is *"count the slow boundary crossings before optimising the loop."*
+**Not writing accidental O(n²).** The `contains`-in-a-loop trap (§1.3) is the single most common one, and it is invisible at small n. Code that is fine against a fixture of twenty rows becomes a timeout against a customer with twenty thousand. The habit worth building is noticing nesting: any loop inside a loop over the same data deserves ten seconds of thought about what the inner one is recomputing.
 
-The two meet in one habit: **reason about cost explicitly**, whether that's Big-O in an interview or "how many DB round trips does this endpoint make" in a code review. Both are the same muscle.
+**Knowing when the round trip dominates.** This is the one that matters most in a backend service and is least served by algorithmic thinking. **The bottleneck is almost never your in-memory algorithm; it is the database query, the N+1, the network call** (№00 §1.2, and №20 §2.8 for N+1 specifically). A perfectly O(n) loop wrapped around a query in a loop is still slow, and no amount of Big-O improves it. Counting the slow boundary crossings before optimising the loop is the instinct that separates useful optimisation from theatre.
 
-> **The tell — the whole document:** interviews test whether you can look at a problem and *name the pattern*; the job tests whether you can *pick the right structure and not cross slow boundaries needlessly*. Drill the pattern index for the former; keep the "where's the real bottleneck?" instinct for the latter. Neither requires inventing algorithms — both require recognising them and reasoning about cost.
+The three meet in one habit: **reason about cost explicitly rather than by feel**. Whether that is Big-O on a data structure, round trips on an endpoint, or allocations on a hot path (№13), it is the same muscle, and it is the reason this document is worth having rather than a list of algorithms you could look up.
+
+> **The tell — the whole document:** when something is slow, ask which of three things is true before touching the code. Wrong structure for the access pattern? Fix the structure. Accidental nesting over the same data? Remove the recomputation. Crossing a slow boundary more times than necessary? Nothing algorithmic will help, and it is almost always this one.
 
 ---
 
 # How to expand this
 
-- *The Java data structures in depth* (costs, `HashMap` internals, sorting, concurrency): Collections reference.
-- *Where algorithmic cost meets the real bottleneck* (memory hierarchy, round trips): Engineer's Map §1–2; the N+1 problem specifically is data-access primer §2.8.
-- *Candidates for their own deeper treatment, if useful:* **graph algorithms in full** (Dijkstra/A*/topological sort/MST with worked code); **dynamic programming as its own primer** (the recurrence-finding method, the classic problem families, top-down vs bottom-up); a **curated problem set** mapped to these patterns, as a drill companion to your interview dashboard — this last one would slot directly into your existing prep system.
+- *The Java data structures in depth* (costs, `HashMap` internals, sorting, concurrency): №11.
+- *Where algorithmic cost meets the real bottleneck* (memory hierarchy, round trips): №00 §1–2; the N+1 problem specifically is №20 §2.8.
+- *Candidates for their own deeper treatment:* **graph algorithms in full** (Dijkstra, A*, topological sort, MST, with worked code); **dynamic programming as its own primer** (the recurrence-finding method, the classic problem families, top-down vs bottom-up); **amortised analysis and the structures that depend on it** (dynamic arrays, union-find with path compression, hash table resizing), which §1.4 introduces and does not develop.
 
-*This is a foundations primer written from stable CS knowledge; none of it drifts. The patterns here are the standard interview canon; the value is in drilling the recognition until the smells are reflexive.*
+*This is a foundations primer written from stable CS knowledge; none of it drifts. The patterns here are the standard canon, unchanged in decades; the value is in knowing the mapping from problem smell to pattern well enough that recognition is automatic.*

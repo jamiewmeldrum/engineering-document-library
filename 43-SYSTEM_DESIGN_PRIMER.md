@@ -1,10 +1,10 @@
 # System Design — A Primer №43
 
-*The interview round that plays to breadth rather than syntax, and the discipline behind every architecture decision you'll make on the job. Where №31 (Distributed Systems) gives you the **components and their physics**, this gives you the **method**: how to take a vague prompt like "design Twitter" and turn it into a structured, defensible design in 45 minutes. Prerequisite: №31. Companion: №42 (Architecture, planned).*
+*The discipline behind every architecture decision you will make. Where №31 (Distributed Systems) gives you the **components and their physics**, this gives you the **method**: how to take a vague requirement like "we need a feed" and turn it into a structured, defensible design that survives contact with the people who have to build and run it. Deliberately excludes the implementation of the components themselves, which is №31's job, and organisational architecture concerns, which are №42's. Prerequisite: №31. Companion: №42.*
 
-The thing nobody tells you: **there is no right answer, and the interviewer knows it.** A system-design round is not a test of whether you've memorised Twitter's architecture. It's a test of whether you can handle ambiguity, ask the right questions, reason about scale with numbers, make trade-offs explicitly, and communicate all of it clearly. The candidates who fail are rarely the ones who chose the "wrong" database — they're the ones who dive into details without scoping, design for a billion users when asked for a thousand, or go silent.
+The thing that makes system design feel harder than it is: **there is no right answer, and looking for one is the mistake.** A design is not correct or incorrect, it is appropriate or inappropriate to a set of requirements and a scale, and the same design can be both depending on which. Designs rarely fail because someone chose the wrong database. They fail because nobody scoped the problem, or the system was built for a billion users when it had a thousand, or the trade-offs were made implicitly and nobody could later say why.
 
-The one habit that carries the entire round: **narrate a structured process.** Requirements → numbers → API → data → architecture → deep dive → trade-offs. Even if your design is imperfect, walking that path visibly is most of the assessment.
+The one habit that carries the whole activity: **follow a structured process, explicitly.** Requirements → numbers → API → data → architecture → deep dive → trade-offs. An imperfect design produced by walking that path is more useful than a better design that arrived by intuition, because the path is what lets anyone else check the reasoning, disagree with one step, and change it later without starting again.
 
 Contents:
 
@@ -18,7 +18,7 @@ Contents:
 - **Part 8** — more worked designs: rate limiter, news feed, chat
 - **Part 9** — designing your own system (Practiq)
 - **Part 10** — the trade-off vocabulary
-- **Part 11** — what's actually being assessed, and how it goes wrong
+- **Part 11** — what makes a design good, and how designs go wrong
 
 ## Requirement → technique index
 
@@ -44,21 +44,21 @@ The lookup that turns a stated need into a design move.
 
 # Part 1 — The method
 
-A 45-minute round, time-boxed. Say the structure out loud at the start ("I'll scope requirements, do some estimation, sketch the API and data model, then the architecture, then go deep where it matters") — it signals competence before you've designed anything.
+Time-box the first pass. The proportions below are for a session of roughly an hour; scale them, but keep the ratios, because the failure mode is always spending the whole session on one phase. State the structure before you start, so that everyone involved knows which question is currently open.
 
 | Phase | Time | What you produce |
 |---|---|---|
-| **1. Requirements & scope** | ~5 min | functional list, non-functional targets, explicit out-of-scope |
-| **2. Estimation** | ~5 min | QPS, storage, bandwidth — the numbers that drive decisions |
-| **3. API** | ~5 min | the handful of endpoints, request/response shapes |
-| **4. Data model** | ~5 min | entities, access patterns, storage choice |
-| **5. High-level design** | ~10 min | the box diagram: client → edge → services → data |
-| **6. Deep dive** | ~10 min | one or two areas, usually the interesting bottleneck |
-| **7. Bottlenecks & trade-offs** | ~5 min | what breaks first, what you'd change, what you traded |
+| **1. Requirements & scope** | ~10% | functional list, non-functional targets, explicit out-of-scope |
+| **2. Estimation** | ~10% | QPS, storage, bandwidth — the numbers that drive decisions |
+| **3. API** | ~10% | the handful of endpoints, request/response shapes |
+| **4. Data model** | ~10% | entities, access patterns, storage choice |
+| **5. High-level design** | ~25% | the box diagram: client → edge → services → data |
+| **6. Deep dive** | ~25% | one or two areas, usually the interesting bottleneck |
+| **7. Bottlenecks & trade-offs** | ~10% | what breaks first, what you'd change, what you traded |
 
 Two rules that matter more than the phases:
 
-- **Drive, but check in.** "I'm going to assume reads dominate writes 100:1 — does that match what you have in mind?" You're steering, not lecturing.
+- **Drive, but check in.** "I'm going to assume reads dominate writes 100:1, does that match what you have in mind?" Assumptions stated aloud get corrected early; assumptions made silently get discovered in production.
 - **Breadth first, then depth.** Get a complete working design on the board before optimising any part. A finished simple design beats a beautifully-optimised fragment.
 
 ---
@@ -69,7 +69,7 @@ The prompt is deliberately vague. **"Design Twitter" is not a specification; it'
 
 ## 2.1 Functional requirements — what it does
 
-Pin down the 3–5 core operations, and explicitly cut the rest. For "design Twitter": post a tweet, follow a user, view a home timeline. Explicitly out of scope: DMs, search, ads, trending, notifications — say so out loud. **Narrowing the scope is a senior move, not a dodge**; you cannot design ten features in 45 minutes and attempting it guarantees a shallow answer.
+Pin down the 3–5 core operations, and explicitly cut the rest. For "design Twitter": post a tweet, follow a user, view a home timeline. Explicitly out of scope: DMs, search, ads, trending, notifications — say so out loud. **Narrowing the scope is a senior move, not a dodge**; a design that covers ten features covers none of them properly, and the breadth is what gets mistaken for progress.
 
 ## 2.2 Non-functional requirements — what it must be like
 
@@ -89,7 +89,7 @@ These drive the architecture far more than the features do:
 
 Pick a handful, not all: *How many daily active users? What's the read/write ratio? How big is a typical item? Do reads need to be immediately consistent, or is a second of staleness fine? Global or single-region? What's the retention — forever, or 30 days? Is this greenfield or do we have existing infrastructure?*
 
-> **The tell — scoping:** the interviewer usually has target numbers in mind and will happily give them. Ask for **DAU, read/write ratio, and the consistency requirement** as a minimum — those three determine most of your design. Then state your assumptions explicitly and move; don't spend fifteen minutes gathering requirements.
+> **The tell — scoping:** somebody always has target numbers, even if nobody has written them down. Ask for **DAU, read/write ratio, and the consistency requirement** as a minimum, because those three determine most of the design. If nobody can supply them, state your assumptions explicitly and move on; an assumption on the page can be corrected, and an unbounded requirements phase cannot be finished.
 
 ---
 
@@ -236,7 +236,7 @@ Splitting **writes** across nodes — the last resort, because it's a permanent 
 ## 6.8 Specialised stores
 Once one database is doing three jobs badly, split by workload: a search index for text, an OLAP store for analytics, a KV store for hot lookups — each with its own sync and consistency implications.
 
-> **The tell — scaling:** the ladder is **stateless → vertical → cache → CDN → replicas → async → shard**. Say the order out loud in an interview; jumping straight to "we'll shard it" without caching first reads as pattern-matching rather than reasoning. And always ask "what's the actual bottleneck?" before choosing — scaling the wrong layer is wasted work.
+> **The tell — scaling:** the ladder is **stateless → vertical → cache → CDN → replicas → async → shard**. Work the order deliberately; jumping straight to "we'll shard it" without caching first is pattern-matching rather than reasoning, and it commits you to operational complexity you may never have needed. And always ask "what's the actual bottleneck?" before choosing — scaling the wrong layer is wasted work.
 
 ---
 
@@ -346,7 +346,7 @@ Key points: **WebSockets** for bidirectional push (№51 §5.5) — HTTP polling
 
 # Part 9 — Designing your own system
 
-Interviewers frequently pivot to *your* project — which is an easier round if you've thought about it in these terms. Practiq, framed as a system design:
+The method is worth turning on a system you actually own, because the numbers are real and you cannot hand-wave them. Practiq, framed as a system design:
 
 **Requirements.** Functional: browse/filter questions by concept, attempt a question, human review workflow, ingest questions from PDFs. Non-functional: read-heavy (students browsing ≫ editors writing); modest scale (thousands of DAU, not millions); **strong consistency for the review workflow** (two reviewers double-approving is a genuine bug — №31 §4.3); eventual is fine for browse.
 
@@ -358,13 +358,13 @@ Interviewers frequently pivot to *your* project — which is an easier round if 
 
 **What you'd change at 100×.** Read replicas, then a Redis cache for concepts, then split the extractor (already separable — it's a different runtime and scaling profile), then partition attempts by date if volume demanded it. Being able to say *what would break first and in what order* is the mark of someone who's actually thought about their system.
 
-> **The tell — your own system:** interviewers respect "we're at a scale where a monolith and one Postgres is correct, and here's the number that proves it" far more than an over-engineered design. Know your scale, know your first bottleneck, know your reversible vs irreversible decisions (№00 §8).
+> **The tell — your own system:** "we're at a scale where a monolith and one Postgres is correct, and here's the number that proves it" is a stronger position than any over-engineered design, and it is one you can only hold if you did the estimation. Know your scale, know your first bottleneck, know your reversible vs irreversible decisions (№00 §8).
 
 ---
 
 # Part 10 — The trade-off vocabulary
 
-The recurring tensions. Being able to *name* them is what a design interview is really testing:
+The recurring tensions. Being able to *name* them is most of what makes a design discussion productive rather than circular:
 
 | Trade-off | The tension | How to decide |
 |---|---|---|
@@ -383,48 +383,50 @@ The sentence pattern that scores: *"I'd choose X here because [context-specific 
 
 ---
 
-# Part 11 — What's actually being assessed
+# Part 11 — What makes a design good, and how designs go wrong
 
-## 11.1 The real rubric
+## 11.1 The qualities that actually matter
 
-Not "did you get the right architecture." Interviewers are looking for:
+A design is not judged by whether it matches some canonical architecture. Seven things separate one that holds up from one that does not:
 
-1. **Handling ambiguity** — do you scope, or start building blind?
-2. **Structured thinking** — is there a visible process?
-3. **Quantitative reasoning** — do numbers inform decisions?
-4. **Breadth** — do you know the building blocks and what they're for?
-5. **Depth on demand** — can you go deep when pushed?
-6. **Trade-off reasoning** — do you justify choices and name their costs?
-7. **Communication** — can they follow you? Do you invite input?
+1. **Ambiguity handled** — the requirements were scoped rather than assumed.
+2. **Structured thinking** — there is a visible path from requirement to decision, so someone else can disagree with one step rather than the whole thing.
+3. **Quantitative reasoning** — numbers drove the decisions, and the numbers are written down.
+4. **Breadth** — the building blocks were chosen from the full set, not the two the author happened to know.
+5. **Depth where it counts** — the one or two genuinely hard parts got real attention.
+6. **Trade-offs named** — every choice states what it costs, not just what it buys.
+7. **Communicated** — someone who was not in the room can follow it.
 
-Note that (7) is weighted heavily, and it's the one strong engineers most often lose points on by going quiet.
+The seventh is the one strong engineers most often neglect, and it is the one that determines whether the design survives the author moving teams.
 
-## 11.2 How it goes wrong
+## 11.2 How designs go wrong
 
 | Failure | Fix |
 |---|---|
-| Diving into details before scoping | always do Part 2 first |
-| Designing for a billion users when asked for a thousand | let the estimate decide (Part 3) |
-| Going silent while thinking | narrate: "I'm weighing cache vs replica here…" |
-| Presenting one answer with no alternatives | name the option you rejected and why |
+| Detail before scope | always do Part 2 first |
+| Designing for a billion users when you have a thousand | let the estimate decide (Part 3) |
+| Reasoning left in someone's head | write the assumption down next to the decision it drove |
+| One answer with no alternatives | name the option you rejected and why |
 | Buzzword soup (Kafka! Kubernetes! microservices!) | justify every component; if you can't, remove it |
-| Never mentioning failure | say what happens when a node/dependency dies (№31 §10) |
+| Never mentioning failure | say what happens when a node or dependency dies (№31 §10) |
 | Refusing to commit | state assumptions and move; a decided design beats a hedged one |
-| Ignoring the interviewer's hints | a nudge ("what if this instance dies?") is a *gift* — follow it |
+| Ignoring the awkward question | "what if this instance dies?" is a gift, not an attack |
 
-## 11.3 The last five minutes
+Most of these are the same failure wearing different clothes: **a decision was made without recording what it was traded against.** That is what makes a design impossible to revisit, because the next person cannot tell which constraints were real and which were incidental.
 
-Reserve time to close well: name the **bottleneck that breaks first**, the **failure modes** and how the design survives them, **what you'd monitor** (№31 §11), and **what you'd do differently with more time or scale**. Ending with "here's what I'd revisit first" is a strong finish — it shows you know a design is never done.
+## 11.3 Closing a design
 
-> **The tell — the round:** you're being assessed as a colleague in a design discussion, not as an oracle. Scope, quantify, decide, justify, and keep talking. Nobody expects perfection in 45 minutes; they expect structured reasoning and honest trade-offs.
+A design is finished when it says what it does *not* handle. Before you call it done, name the **bottleneck that breaks first**, the **failure modes** and how the design survives them, **what you would monitor** (№31 §11), and **what you would change at ten times the scale**. Ending on "here is what I would revisit first" is a stronger finish than any claim of completeness: it shows the design has a known edge rather than an imagined absence of one.
+
+> **The tell — the whole document:** a design is a set of decisions plus the reasons they were made. If you can produce the decisions but not the reasons, you have a diagram rather than a design, and it will be re-litigated from scratch the first time a constraint changes. Scope, quantify, decide, justify, and write the justification down where the decision lives.
 
 ---
 
 # How to expand this
 
 - *Prerequisite:* №31 Distributed Systems — every component here (replication, queues, caching, consistency, resilience) is explained properly there.
-- *Adjacent:* №42 Architecture (planned) for the in-application structure; №51 §10 for the edge components; №20 for the database layer; №54 Cloud & AWS (planned) for the managed-service equivalents of every box in Part 5.
-- *Practice, not reading:* this is the one topic where a document is genuinely insufficient. Design 8–10 systems out loud, on paper, timed. The canonical set: URL shortener, rate limiter, news feed, chat, web crawler, notification service, file storage (Dropbox), video streaming, ticket booking (contention!), and a payment system (idempotency!). The variety matters — each stresses a different constraint.
-- *Candidates for deeper treatment:* a full worked "design Twitter/Instagram" with diagrams; a back-of-envelope estimation drill sheet; Practiq designed end to end as a formal design doc.
+- *Adjacent:* №42 Architecture for the in-application structure; №51 §10 for the edge components; №20 for the database layer; №54 for the managed-service equivalents of every box in Part 5.
+- *Practice, not reading:* this is the one topic where a document is insufficient on its own. Work through designs end to end, on paper. The canonical set, chosen because each stresses a different constraint: URL shortener, rate limiter, news feed, chat, web crawler, notification service, file storage, video streaming, ticket booking (contention), and a payment system (idempotency).
+- *Candidates for deeper treatment:* a full worked "design Twitter/Instagram" with diagrams; a reference sheet of estimation constants and the arithmetic shortcuts in Part 3; Practiq designed end to end as a formal design doc.
 
 *Written from stable knowledge — the method, the estimation techniques and the classic problems don't drift. Specific managed-service limits and capabilities do; check those before quoting numbers in a real design.*

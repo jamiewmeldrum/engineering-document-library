@@ -19,7 +19,7 @@ Contents:
 - **Part 9** — caching
 - **Part 10** — resilience patterns
 - **Part 11** — observing a distributed system
-- **Part 12** — when to use what, and the interview
+- **Part 12** — when to use what, and the questions worth being able to answer
 
 ## Symptom index
 
@@ -124,7 +124,7 @@ Since physical time is unreliable, distributed systems order events **causally**
 
 # Part 4 — CAP, PACELC and consistency models
 
-The most-cited and most-mangled topic in the field. Getting it precisely right is an interview differentiator.
+The most-cited and most-mangled topic in the field. Getting it precisely right is what separates a useful conversation about consistency from a circular one.
 
 ## 4.1 CAP, stated properly
 
@@ -407,7 +407,7 @@ You cannot debug what you cannot see, and in a distributed system no single mach
 
 ---
 
-# Part 12 — When to use what, and the interview
+# Part 12 — When to use what
 
 ## 12.1 Decision frameworks
 
@@ -423,11 +423,11 @@ You cannot debug what you cannot see, and in a distributed system no single mach
 
 **F. Handling a failed call?** Tell → retry: idempotent and transient. Tell → circuit-break: the dependency is failing repeatedly. Tell → degrade: you can serve something useful without it. Tell → fail fast: none of the above. Default: **timeout always; retry with backoff+jitter if idempotent; circuit breaker around every external dependency.**
 
-## 12.2 The interview
+## 12.2 The questions worth being able to answer
 
-Distributed systems is the backbone of the system-design round (№43). The questions and where they're answered:
+These are the load-bearing questions in this field, and they are the ones to ask of any design that crosses a network (№43). Where each is answered:
 
-- **"Explain CAP."** → §4.1 — and score the point by saying **P isn't optional**, it's about behaviour *during a partition*, and mentioning PACELC.
+- **"Explain CAP."** → §4.1. The precise version: **P isn't optional**, the choice is about behaviour *during* a partition, and PACELC is the more useful formulation.
 - **"Strong vs eventual consistency?"** → §4.3, with the practical framing: what does the user actually notice?
 - **"How do you handle a failed request?"** → §10 — timeout, backoff+jitter, idempotency, circuit breaker. Name the retry storm.
 - **"How do you avoid duplicate processing?"** → §8.1 — idempotency keys, and "exactly-once delivery doesn't exist; exactly-once *processing* does, via idempotency."
@@ -435,7 +435,7 @@ Distributed systems is the backbone of the system-design round (№43). The ques
 - **"How do services communicate?"** → §7, with the sync/async trade.
 - **"Distributed transactions?"** → §8.2 — sagas and the outbox; explain why 2PC is avoided.
 
-The framing that marks a strong answer: **name the trade-off, then make a call.** "I'd use eventual consistency here because the user never sees this data directly, and the availability win is worth it — but for the approval workflow I'd want strong consistency in a single transaction, because two reviewers double-approving is a real bug." That's engineering; reciting CAP is trivia.
+The framing underneath all of them: **name the trade-off, then make a call.** "I'd use eventual consistency here because the user never sees this data directly, and the availability win is worth it — but for the approval workflow I'd want strong consistency in a single transaction, because two reviewers double-approving is a real bug." That's engineering; reciting CAP is trivia.
 
 ---
 

@@ -1,14 +1,14 @@
-# AWS — A Primer for SAA-C03 & DVA-C02 №54
+# AWS — A Primer №54
 
-*Comprehensive study documentation for the **AWS Certified Solutions Architect – Associate (SAA-C03)** and **AWS Certified Developer – Associate (DVA-C02)** exams. Both exam versions verified current, July 2026. Structured as a study reference: services grouped by category, exam-relevant facts in tables, and — most importantly — the **decision frameworks** (Part 13) that the exams actually test. Companion to №31 (Distributed Systems), №43 (System Design), №51 (Networking), №50 (Docker).*
+*A working reference to AWS: the services that matter grouped by category, the facts about each that actually determine a decision, and, most importantly, the **decision frameworks** (Part 13) for choosing between services that overlap. Deliberately excludes exhaustive service coverage, which is №91's job, and the concepts underneath the services, which belong to №31, №51, №50 and №20. Companion to №31 (Distributed Systems), №43 (System Design), №51 (Networking), №50 (Docker), №91 (AWS Service Reference).*
 
-**The single most important thing to understand about these exams:** they are not memory tests of service definitions. Almost every question is a **scenario** ending in "which solution meets these requirements *most cost-effectively* / *with least operational overhead* / *most securely*." Four options are usually all technically capable of working; you're choosing on the qualifier. So the study goal isn't "what is SQS" — it's **"given these constraints, SQS or SNS or EventBridge or Kinesis, and why."** Part 13 is therefore the heart of this document; everything before it is the vocabulary you need to use it.
+**The single most important thing to understand about AWS is that knowing what a service does is almost never the hard part.** For any given problem, three or four AWS services will technically work. SQS, SNS, EventBridge and Kinesis will all move a message from A to B. The difficulty is never "what is SQS", it is **"given these constraints, SQS or SNS or EventBridge or Kinesis, and why"**, and the answer turns entirely on which constraint you are actually optimising for: cost, operational overhead, latency, ordering, durability, or blast radius. Part 13 is therefore the heart of this document. Everything before it is the vocabulary you need in order to use it.
 
-**Quotas caveat:** the limits quoted here are the well-known, exam-stable ones. AWS adjusts quotas regularly — verify anything you'd stake a design on against current AWS documentation.
+**Quotas caveat:** the limits quoted here are the well-known, long-stable ones. AWS adjusts quotas regularly — verify anything you'd stake a design on against current AWS documentation.
 
 Contents:
 
-- **Part 1** — the two exams: format, domains, strategy
+- **Part 1** — navigating AWS: the overlap problem and the layers
 - **Part 2** — core concepts: regions, AZs, shared responsibility, Well-Architected
 - **Part 3** — IAM and identity
 - **Part 4** — compute
@@ -21,56 +21,41 @@ Contents:
 - **Part 11** — security services
 - **Part 12** — cost optimisation
 - **Part 13** — decision frameworks: which service, when
-- **Part 14** — exam technique: question patterns and traps
-- **Part 15** — a study plan
+- **Part 14** — choosing on the constraint, and the common traps
 
 ---
 
-# Part 1 — The two exams
+# Part 1 — Navigating AWS
 
-## 1.1 Format (both exams)
+## 1.1 The overlap problem
 
-| | SAA-C03 | DVA-C02 |
-|---|---|---|
-| Questions | 65 (50 scored, 15 unscored) | 65 (50 scored, 15 unscored) |
-| Time | 130 minutes | 130 minutes |
-| Cost | $150 USD | $150 USD |
-| Score | 100–1000, **pass at 720** | 100–1000, **pass at 720** |
-| Format | multiple choice / multiple response | multiple choice / multiple response |
-| Validity | 3 years | 3 years |
+AWS has upwards of two hundred services and adds more every year. Roughly forty of them account for almost everything most teams build, and the rest are either niche, legacy, or a managed wrapper around one of the forty. **The difficulty of AWS is not breadth, it is that the services deliberately overlap**, because each was built for a different customer at a different time and AWS almost never retires anything.
 
-Holding any active AWS certification gets you a **50% discount voucher** for the next one.
+You can run a container on ECS, EKS, Fargate, App Runner, Lightsail, Elastic Beanstalk, or an EC2 instance with Docker on it. All seven work. They differ in how much of the operational surface you own, how much you pay for that, and how much of AWS you have to learn to use them. That is the shape of nearly every AWS decision, and it is why Part 13 exists.
 
-## 1.2 Domains
+## 1.2 The three layers
 
-**SAA-C03 — you decide *what to use and how it fits together*:**
+Almost every AWS service sits at one of three levels, and knowing which one you are looking at answers most questions about it before you read the documentation.
 
-| Domain | Weight | Essence |
-|---|---|---|
-| 1. Design Secure Architectures | 30% | IAM, encryption, network isolation |
-| 2. Design Resilient Architectures | 26% | multi-AZ, decoupling, fault tolerance |
-| 3. Design High-Performing Architectures | 24% | right service, caching, scaling |
-| 4. Design Cost-Optimised Architectures | 20% | pricing models, storage classes, right-sizing |
+| Layer | You manage | Examples | Costs |
+|---|---|---|---|
+| **Primitive** | nearly everything above the hypervisor | EC2, EBS, VPC | cheapest per unit, most expensive in effort |
+| **Managed** | configuration and data; AWS runs the software | RDS, ElastiCache, MSK, ECS | middle on both |
+| **Serverless** | data and code only | Lambda, DynamoDB, S3, SQS, EventBridge | most expensive per unit at scale, cheapest in effort |
 
-**DVA-C02 — you *build, deploy and debug* on AWS:**
+**The gradient is the same trade in every category: you are buying back operational surface with money.** The right answer depends on whether your scarce resource is engineering time or budget, and at what scale, because the crossover point moves. Serverless is almost always right below some threshold of traffic and almost always wrong above another, and the whole skill is knowing roughly where those thresholds sit for the workload in front of you.
 
-| Domain | Weight | Essence |
-|---|---|---|
-| 1. Development with AWS Services | 32% | Lambda, DynamoDB, API Gateway, SDKs |
-| 2. Security | 26% | Cognito, KMS, IAM for applications, secrets |
-| 3. Deployment | 24% | CI/CD, CloudFormation/SAM, Beanstalk, containers |
-| 4. Troubleshooting and Optimisation | 18% | X-Ray, CloudWatch, retries, caching |
+## 1.3 Reading AWS naming
 
-## 1.3 How they differ, and the overlap
+Three conventions worth internalising, because they carry real information:
 
-Roughly **30–40% of the content overlaps** — IAM, VPC basics, S3, DynamoDB, Lambda, CloudWatch, KMS all appear in both. The difference is the *lens*:
+**"Elastic" means it scales horizontally and you are billed for what you use.** EC2, ELB, EFS, ElastiCache. It is a marketing prefix but a reliable one.
 
-- **SAA** asks "which architecture?" — breadth across many services, favouring managed and serverless answers, always weighing cost/resilience/security.
-- **DVA** asks "how do I implement it?" — depth in a narrower set (Lambda, DynamoDB, API Gateway, SQS/SNS, Cognito, KMS, CodePipeline, X-Ray, CloudFormation/SAM), including SDK behaviour, error codes, retry logic, and deployment mechanics.
+**A service named after what it replaces is a managed version of that thing**, usually a slightly older version with AWS-specific management bolted on: RDS for PostgreSQL, MSK for Kafka, MQ for ActiveMQ, OpenSearch for Elasticsearch. Expect to be one or two minor versions behind upstream, and check that before assuming a feature exists.
 
-**Recommended order: SAA first, then DVA.** SAA gives the broad foundation that makes everything else easier; DVA then needs only a few weeks of focused work on the developer-specific services. Doing DVA first works if you're deep in application code and want the faster win, but you'll do more groundwork later.
+**A service named after an abstraction is AWS's own design** and has no portable equivalent: DynamoDB, S3, Lambda, Step Functions, EventBridge. These are the ones that lock you in, and they are also usually the ones worth the lock-in, because the operational saving is real.
 
-> **The tell — exam strategy:** for **SAA**, when in doubt prefer the answer that is *managed, serverless, multi-AZ, and least-operational-overhead*. For **DVA**, prefer the answer that uses *the SDK's built-in mechanism* (retries, pagination, encryption) rather than hand-rolling it. Those two heuristics alone resolve a surprising share of questions.
+> **The tell — which layer:** start at serverless and move down only when a number forces you to. The number is usually sustained throughput, a per-request cost multiplied by real traffic, or a hard requirement the serverless option cannot meet (a runtime longer than Lambda's fifteen minutes, a database feature RDS exposes and DynamoDB does not). Moving down a layer without that number is how teams acquire an EKS cluster they did not need.
 
 ---
 
@@ -116,7 +101,7 @@ When a question says "most cost-effective" or "most resilient," it's asking you 
 
 # Part 3 — IAM and identity
 
-The security backbone. **Heavily tested in both exams** (SAA domain 1 is 30%; DVA domain 2 is 26%).
+The security backbone. **Get this layer wrong and nothing above it is secure**, which is why it comes before compute.
 
 ## 3.1 The entities
 
@@ -191,7 +176,7 @@ The exam signals: "fault-tolerant batch processing, minimise cost" → **Spot**.
 
 **Other:** user data (bootstrap script at first boot), instance metadata at `169.254.169.254` (**IMDSv2** is the secure, session-based version — prefer it), AMIs for golden images.
 
-## 4.2 Lambda — heavily tested, especially DVA
+## 4.2 Lambda
 
 The serverless workhorse. Numbers to know:
 
@@ -221,7 +206,7 @@ The serverless workhorse. Numbers to know:
 | **Fargate** | **serverless compute for containers** — no EC2 to manage; works with ECS and EKS |
 | **App Runner** | simplest: source or image → running service |
 
-**ECS launch types:** **EC2** (you manage the instances — cheaper at scale, more control) vs **Fargate** (no instances — less operational overhead, the usual exam answer when "minimise operational overhead" appears).
+**ECS launch types:** **EC2** (you manage the instances — cheaper at scale, more control) vs **Fargate** (no instances — less operational overhead, the usual answer when the binding constraint is operational overhead).
 
 ECS **task role** (permissions for your application code) vs **task execution role** (permissions for the ECS agent to pull the image and write logs) — a classic DVA distinction.
 
@@ -235,7 +220,7 @@ ECS **task role** (permissions for your application code) vs **task execution ro
 
 # Part 5 — Storage
 
-## 5.1 S3 — the most examined service in AWS
+## 5.1 S3
 
 Object storage: buckets (globally unique names), objects (key + value + metadata), **max object size 5 TB**, single-PUT max 5 GB, **multipart upload recommended above ~100 MB** (and required above 5 GB). **11 nines of durability.** **Strong read-after-write consistency** for all operations (since Dec 2020 — old material saying "eventually consistent for overwrites" is outdated).
 
@@ -253,7 +238,7 @@ Object storage: buckets (globally unique names), objects (key + value + metadata
 
 **Lifecycle policies** transition objects between classes and expire them on a schedule — the standard answer to "reduce storage costs over time." Note IA classes have a **30-day minimum**, Glacier Deep Archive 180 days.
 
-**Key features:** **versioning** (protects against overwrite/delete; delete adds a marker), **MFA Delete**, **replication** (CRR cross-region / SRR same-region — requires versioning), **Transfer Acceleration** (upload via edge locations — the answer for slow long-distance uploads), **Presigned URLs** (time-limited access without credentials — very DVA), **Event Notifications** (→ Lambda/SQS/SNS/EventBridge), **S3 Select** (SQL over a single object, retrieve only what you need), **Requester Pays**, **Object Lock** (WORM compliance), **Static website hosting**.
+**Key features:** **versioning** (protects against overwrite/delete; delete adds a marker), **MFA Delete**, **replication** (CRR cross-region / SRR same-region — requires versioning), **Transfer Acceleration** (upload via edge locations — the answer for slow long-distance uploads), **Presigned URLs** (time-limited access without credentials), **Event Notifications** (→ Lambda/SQS/SNS/EventBridge), **S3 Select** (SQL over a single object, retrieve only what you need), **Requester Pays**, **Object Lock** (WORM compliance), **Static website hosting**.
 
 **Encryption** (know the four):
 
@@ -302,9 +287,9 @@ Managed relational: Postgres, MySQL, MariaDB, Oracle, SQL Server, and **Aurora**
 
 **Backups:** automated backups with a retention period (1–35 days) enabling **point-in-time recovery**; manual snapshots persist until deleted. Encryption at rest via KMS must generally be enabled at creation (you can encrypt by restoring a snapshot to a new encrypted instance).
 
-**Aurora** — AWS's cloud-native MySQL/Postgres-compatible engine. Exam facts: **6 copies of data across 3 AZs**, self-healing, storage auto-grows to 128 TB, **up to 15 low-latency read replicas**, failover in ~30s, **Aurora Serverless v2** scales capacity automatically (the answer for unpredictable/intermittent workloads), **Global Database** for cross-region (<1s replication), and **Aurora Replicas can be auto-scaled**.
+**Aurora** — AWS's cloud-native MySQL/Postgres-compatible engine. The facts that matter: **6 copies of data across 3 AZs**, self-healing, storage auto-grows to 128 TB, **up to 15 low-latency read replicas**, failover in ~30s, **Aurora Serverless v2** scales capacity automatically (the answer for unpredictable/intermittent workloads), **Global Database** for cross-region (<1s replication), and **Aurora Replicas can be auto-scaled**.
 
-## 6.2 DynamoDB — critical for DVA, common in SAA
+## 6.2 DynamoDB
 
 Managed NoSQL key-value/document store. Single-digit-millisecond latency at any scale.
 
@@ -375,7 +360,7 @@ Your isolated virtual network. The components, and what each is for:
 | Evaluation | all rules evaluated | **in rule-number order**, first match wins |
 | Default | denies all inbound, allows all outbound | default NACL allows all |
 
-Security groups can **reference other security groups** — "allow 5432 from the app tier's SG" — which is the clean, exam-preferred way to express tiering.
+Security groups can **reference other security groups** — "allow 5432 from the app tier's SG" — which is the clean way to express tiering.
 
 **Endpoints:** **Gateway endpoints** (S3 and DynamoDB only, free, via route table) vs **Interface endpoints / PrivateLink** (an ENI in your subnet, most other services, hourly + data cost). "Access S3 without going over the internet" → **gateway endpoint**.
 
@@ -412,7 +397,7 @@ Managed DNS (№51 §3) plus health checks and traffic policy. Routing policies 
 
 ## 7.4 CloudFront and edge
 
-**CloudFront** — the CDN. Caches at edge locations, reducing latency and origin load. Exam points: **origins** (S3, ALB, any HTTP), **OAC/OAI** (restrict S3 so it's *only* reachable via CloudFront), **signed URLs** (single file) vs **signed cookies** (multiple files) for private content, **cache behaviours** and TTLs, **invalidations**, field-level encryption, and integration with **WAF** and **Shield**.
+**CloudFront** — the CDN. Caches at edge locations, reducing latency and origin load. The points that matter: **origins** (S3, ALB, any HTTP), **OAC/OAI** (restrict S3 so it's *only* reachable via CloudFront), **signed URLs** (single file) vs **signed cookies** (multiple files) for private content, **cache behaviours** and TTLs, **invalidations**, field-level encryption, and integration with **WAF** and **Shield**.
 
 **Global Accelerator** — routes over the AWS backbone using **anycast static IPs**; improves TCP/UDP performance for non-cacheable and non-HTTP traffic. CloudFront caches content; Global Accelerator accelerates connections — that's the distinction they test.
 
@@ -468,7 +453,7 @@ Real-time streaming (the Kafka analogue, №31 §7.2):
 | **HTTP API** | cheaper, faster, fewer features — prefer unless you need REST-only features |
 | **WebSocket API** | bidirectional (№51 §5.5) |
 
-Exam points: **stages** and stage variables, **usage plans + API keys** (throttling per client), **caching** (reduce backend calls), **authorisers** (Lambda authoriser, Cognito, IAM), **CORS** (№51 §9.5), **request validation**, and integration types (Lambda proxy vs non-proxy — proxy passes the whole request through, which is the common choice).
+The points that matter: **stages** and stage variables, **usage plans + API keys** (throttling per client), **caching** (reduce backend calls), **authorisers** (Lambda authoriser, Cognito, IAM), **CORS** (№51 §9.5), **request validation**, and integration types (Lambda proxy vs non-proxy — proxy passes the whole request through, which is the common choice).
 
 **Amazon MQ** — managed ActiveMQ/RabbitMQ; the answer only when migrating an existing app that needs **standard protocols** (AMQP, MQTT, JMS) rather than SQS's API.
 
@@ -481,7 +466,7 @@ DVA-heavy (domain 3 is 24%), and CloudFormation appears in SAA too.
 ## 9.1 Infrastructure as Code
 
 - **CloudFormation** — declarative YAML/JSON templates. Concepts: **stacks**, **change sets** (preview before applying — the safe practice), **nested stacks**, **StackSets** (deploy across accounts/regions), **drift detection**, **parameters/mappings/conditions/outputs**, **intrinsic functions** (`!Ref`, `!GetAtt`, `!Sub`, `!Join`), **DeletionPolicy** (`Retain` to keep a database when the stack goes), and rollback on failure.
-- **SAM** — a CloudFormation extension for serverless: simpler syntax for Lambda/API Gateway/DynamoDB, plus `sam local` for local testing. Very DVA.
+- **SAM** — a CloudFormation extension for serverless: simpler syntax for Lambda/API Gateway/DynamoDB, plus `sam local` for local testing. .
 - **CDK** — define infrastructure in a real language (TypeScript/Python/Java), synthesised to CloudFormation.
 - **Terraform** — third-party, multi-cloud (№55, planned).
 
@@ -513,10 +498,10 @@ Know which file belongs to which service — `buildspec.yml` → CodeBuild; `app
 
 **CodeDeploy** modes: **in-place** (update existing instances) vs **blue/green** (new fleet, then shift). Lambda/ECS deployment configs: `Canary10Percent5Minutes`, `Linear10PercentEvery1Minute`, `AllAtOnce`.
 
-## 9.4 The SDK and developer specifics (DVA)
+## 9.4 The SDK and application-level specifics
 
 - **Credentials chain** — the SDK looks in order: environment variables → Java system properties → shared credentials file → container credentials → **instance profile / IAM role**. Roles at the bottom, and the correct production answer.
-- **Retries and backoff** — the SDK retries throttling and 5xx errors with **exponential backoff and jitter** automatically (№31 §10.2). Exam answer for `ThrottlingException`: exponential backoff.
+- **Retries and backoff** — the SDK retries throttling and 5xx errors with **exponential backoff and jitter** automatically (№31 §10.2). The response to `ThrottlingException`: exponential backoff.
 - **Pagination** — list operations are paginated; use the paginators or follow the continuation token.
 - **Exponential backoff, idempotency tokens, and conditional writes** appear constantly in DVA scenarios.
 
@@ -536,7 +521,7 @@ Know which file belongs to which service — `buildspec.yml` → CodeBuild; `app
 | **AWS Config** | **resource configuration compliance** over time; "was this ever non-compliant?" |
 | **Trusted Advisor** | recommendations across cost, security, fault tolerance, performance, limits |
 
-The three-way distinction the exam tests: **CloudWatch** = performance/operational telemetry. **CloudTrail** = API audit. **Config** = configuration compliance and history.
+The three-way distinction that matters: **CloudWatch** = performance/operational telemetry. **CloudTrail** = API audit. **Config** = configuration compliance and history.
 
 ---
 
@@ -646,7 +631,7 @@ The SAA's 20% domain, and a lens on every other question.
 | Find PII sitting in S3 | **Macie** |
 | Who made this API call? | **CloudTrail** |
 
-## 13.6 Resilience patterns (SAA's bread and butter)
+## 13.6 Resilience patterns
 
 | Requirement | Answer |
 |---|---|
@@ -659,64 +644,46 @@ The SAA's 20% domain, and a lens on every other question.
 
 ---
 
-# Part 14 — Exam technique
+# Part 14 — Choosing on the constraint, and the common traps
 
-## 14.1 Read the qualifier first
+## 14.1 Name the constraint before you name the service
 
-Nearly every question ends with a qualifier that *is* the question:
+Part 13 gives you the decision tables. This section is the step before them, and it is the one people skip: **deciding which property you are optimising for, out loud, before comparing options.** Three or four services will meet the functional requirement. Only the constraint separates them.
 
-| Qualifier | Optimise for |
+| The constraint | What it selects for |
 |---|---|
-| "MOST cost-effective" | cheapest that still meets the stated requirement |
-| "LEAST operational overhead" | **most managed / serverless** option |
-| "MOST secure" | least privilege, encryption, private networking |
-| "HIGHEST availability" | multi-AZ, multi-region, no SPOF |
-| "MINIMAL downtime" | blue/green, Multi-AZ failover, immutable deploys |
-| "MOST performant" | caching, right instance type, closest edge |
-| "REAL-TIME" | Kinesis/streaming, not batch |
+| Cost | the cheapest option that still meets the stated requirement, not the cheapest option |
+| Operational overhead | the most managed or serverless option available |
+| Security | least privilege, encryption at rest and in transit, private networking |
+| Availability | multi-AZ, multi-region, no single point of failure |
+| Deployment risk | blue/green, Multi-AZ failover, immutable deploys |
+| Latency | caching, right instance family, closest edge |
+| Freshness | streaming rather than batch |
 
-Two options are often both *correct*; only one is correct **for the qualifier**.
+Two options are often both correct in the abstract, and only one is correct **for the constraint that actually binds**. When a design argument goes in circles, it is almost always because two people are optimising for different properties and neither has said which.
 
-## 14.2 Common traps
+## 14.2 The common traps
 
-- **Access keys on an instance** — nearly always wrong; use an IAM role.
-- **"Scan the DynamoDB table"** — usually wrong; redesign keys or use a GSI/Query.
-- **Anything requiring SSH/manual patching** when the question says "reduce operational overhead."
-- **Multi-AZ ≠ read scaling** and **read replicas ≠ high availability** — the exam deliberately mixes these.
-- **NAT Gateway in one AZ** — a single point of failure; one per AZ for HA.
-- **Security groups can't deny** — if a question needs an explicit deny, it's a **NACL**.
-- **Overly broad IAM** (`"Action": "*"`) — never the "most secure" answer.
-- **Storing session state on the instance** — breaks scaling; use ElastiCache/DynamoDB (№31 §5.1).
-- **Lambda for >15 minutes** — impossible; the answer is Fargate/Batch/Step Functions.
-- **CloudWatch memory metrics** — require the agent; not there by default.
+These are the AWS anti-patterns that keep appearing in real systems, not just in theory:
 
-## 14.3 Technique
+- **Access keys on an instance.** Nearly always wrong; use an IAM role.
+- **Scanning a DynamoDB table.** Usually wrong; redesign the keys or use a GSI and Query.
+- **Anything requiring SSH or manual patching** when the stated goal was reducing operational overhead.
+- **Multi-AZ is not read scaling, and read replicas are not high availability.** They are routinely confused, and the failure only shows up during an incident.
+- **A NAT Gateway in one AZ** is a single point of failure. One per AZ if you want the availability you think you have.
+- **Security groups cannot deny.** If you need an explicit deny, you need a NACL.
+- **Overly broad IAM** (`"Action": "*"`) is never the secure answer, and is the most common finding in any real audit.
+- **Session state on the instance** breaks horizontal scaling. Externalise it to ElastiCache or DynamoDB (№31 §5.1).
+- **Lambda for anything over fifteen minutes** is impossible. Fargate, Batch, or Step Functions.
+- **CloudWatch memory metrics require the agent.** They are not there by default, and discovering that during an incident is a bad time.
 
-Eliminate first — usually two options are obviously wrong on a hard constraint (a service that can't do the thing, a timeout that's impossible), leaving a genuine two-way choice you resolve on the qualifier. Watch for **absolute requirements** ("must be encrypted at rest," "cannot traverse the internet," "must be ordered") — these single-handedly eliminate options. Flag and move on rather than burning time; **130 minutes / 65 questions ≈ 2 minutes each**, and the review pass is where flagged questions get resolved. There's no penalty for guessing, so **never leave a question blank**.
-
----
-
-# Part 15 — A study plan
-
-**Timeline:** SAA-C03 in ~6–8 weeks of steady study for someone with your background (you already have containers, networking, databases, and distributed systems from №50, №51, №20, №31 — that's a real head start). DVA-C02 in ~3–4 weeks after SAA, given the overlap.
-
-**The approach that works:**
-
-1. **Learn the services** — this document plus a video course (Stephane Maarek and Adrian Cantrill are the two standard recommendations) for the areas you're weakest in.
-2. **Get hands-on.** Build something small in the free tier: a VPC with public/private subnets, an ALB in front of two instances, an RDS in the private subnet, a Lambda triggered by S3, a DynamoDB table with a GSI. **The concepts stick far better once you've clicked them together**, and Practiq's own deployment is a legitimate study project — building it *is* revision.
-3. **Practice exams are non-negotiable.** They teach the question *style*, which is half the exam. Tutorials Dojo is the most-recommended set. Aim for consistent **80%+** before booking, and — this is the important part — **read the explanation for every question you get wrong *and* every one you guessed right.**
-4. **Drill the decision tables** (Part 13). Those *are* the exam.
-5. **Book the exam** once you're consistently at 80%. A booked date is the forcing function.
-
-**Where your existing library helps:** №51 covers VPC/DNS/TLS/load-balancing concepts properly, so the AWS networking domain is mostly learning AWS's naming for things you know. №31 covers decoupling, queues, caching, and resilience — the conceptual backbone of the SAA resilience domain. №50 covers containers, so ECS/Fargate is mostly AWS specifics. №20 covers relational databases, so RDS/Aurora is largely feature learning.
-
-> **The tell — passing:** the exams reward *judgment between services*, not recall of service descriptions. If you can look at a scenario and say "this needs decoupling because the consumer is slower than the producer, so SQS; and it needs to survive an AZ failure, so Multi-AZ RDS; and the qualifier says cost, so Spot for the workers" — you'll pass comfortably. Study Part 13 hardest.
+> **The tell — service choice:** when two services both work, the question is never "which is better", it is "which constraint binds". State it, then let Part 13 resolve the choice. If nobody can say which constraint binds, that is the actual finding, and it means the requirements are not finished.
 
 ---
 
 # How to expand this
 
-- *Related library docs:* №51 (networking foundations), №31 (distributed systems), №50 (containers), №20 (databases), №43 (system design — the same skill in interview form), №55 IaC/Terraform (planned), №57 Observability (planned).
-- *Candidates for deeper treatment:* a **VPC deep-dive** with worked subnet/route-table/CIDR design; **DynamoDB data modelling** end to end (single-table design, access patterns, GSI strategy) — the hardest DVA topic; **a Practiq reference architecture** built as an exam-style design with justifications; **service-by-service flashcard sets** for the drilling phase; a **CloudFormation/SAM worked template** for the deployment domain.
+- *Related library docs:* №51 (networking foundations), №31 (distributed systems), №50 (containers), №20 (databases), №43 (system design, the same judgment applied without a vendor), №55 (IaC and Terraform), №57 (observability), №91 (every service at even depth).
+- *Candidates for deeper treatment:* a **VPC deep-dive** with worked subnet, route-table and CIDR design; **DynamoDB data modelling** end to end (single-table design, access patterns, GSI strategy), which is the hardest thing in this document and gets two paragraphs; **a Practiq reference architecture** built as a full design with justifications; a **CloudFormation and SAM worked template**; and **the cost model**, which Part 12 introduces and does not develop into anything you could forecast with.
 
-*Exam versions (SAA-C03, DVA-C02), format and pricing verified July 2026. Service capabilities and quotas change — AWS's own exam guides and documentation are the final authority, and quotas quoted here should be re-checked before you rely on them in a design.*
+*Service capabilities and quotas change constantly, and this is the document in the library most exposed to that: treat every number here as indicative and AWS's own documentation as the final authority before you rely on one in a design. The structural material (the three layers, the shared responsibility model, the decision frameworks in Part 13) is stable and does not drift. Service facts were current as of July 2026.*

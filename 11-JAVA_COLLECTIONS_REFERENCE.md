@@ -150,7 +150,7 @@ Note an `Iterator` over `entrySet()` is also the only way to **remove** entries 
 
 ### 4.1 How HashMap actually works
 
-Worth understanding properly — it's the most-asked collections question in interviews, and it explains the `equals`/`hashCode` contract (§7) rather than leaving it as a rule to memorise.
+Worth understanding properly, because it is what makes the `equals`/`hashCode` contract (§7) follow from the mechanism rather than sit there as a rule to memorise.
 
 **The structure.** A `HashMap` is an **array of buckets** (`Node[] table`). Each `Node` holds the key, the value, the cached hash, and a `next` pointer.
 
@@ -349,7 +349,7 @@ Map<Long, List<String>> approvedTextByConcept = questions.stream()
 
 ## 12. The legacy corner — and why it's retired
 
-These are pre-Java-2 classes you'll meet in old code and interview questions. You won't write them, but knowing *why* they lost is the actual lesson.
+These are pre-Java-2 classes you'll meet in old code. You won't write them, but knowing *why* they lost is the actual lesson.
 
 | Legacy | Modern | Why the legacy one lost |
 |---|---|---|
@@ -397,29 +397,29 @@ These are pre-Java-2 classes you'll meet in old code and interview questions. Yo
 
 ---
 
-## 15. The classic interview questions → where they're answered
+## 15. The questions worth being able to answer → where they're answered
 
-Collections is a guaranteed interview topic. The classics, mapped to sections — and a note on which are actually still asked.
+The recurring questions about this framework, mapped to sections, with a note on which still reflect a real decision and which are now historical.
 
-| Question | Section | Still asked? |
+| Question | Section | Still a live decision? |
 |---|---|---|
 | Difference between `List`, `Set`, `Map`? | §1–4 | **yes** — fundamentals |
 | When would you use X over Y? | §14 | **yes** — this is the modern focus |
 | How does `HashMap` work internally? | **§4.1** | **yes** — the single most-asked |
 | `equals`/`hashCode` contract; what breaks if violated? | §7, §4.1 | **yes** |
-| `HashMap` vs `Hashtable`? | §12 | asked, but the *real* answer is `ConcurrentHashMap` |
+| `HashMap` vs `Hashtable`? | §12 | historical — the *real* answer is `ConcurrentHashMap` |
 | `Hashtable` vs `ConcurrentHashMap`? | §12, §11 | **yes** — lock granularity is the point |
 | `ArrayList` vs `LinkedList`? | §2 | **yes** |
-| `ArrayList` vs `Vector`? | §12 | fading — but the *why* still matters |
+| `ArrayList` vs `Vector`? | §12 | historical — but the *why* still matters |
 | Fail-fast vs fail-safe iterators? | §9 | **yes** |
-| `Iterator` vs `Enumeration`? | §12 | mostly retired |
+| `Iterator` vs `Enumeration`? | §12 | historical |
 | Four ways to traverse a `Map`? | §4 | **yes** — often as a coding task |
 | How do you find duplicates in a `List`? | §2 | **yes** — coding task |
 | `Comparable` vs `Comparator`? | §6 | **yes** |
 | How do you make a collection thread-safe? | §11, §12 | **yes** |
 | How do you make a collection immutable? | §8 | **yes** — the view-vs-copy trap |
 
-**The framing that separates a good answer from a recited one:** most of these are "difference between X and Y" questions, and the strong answer never stops at the difference — it names the **trade-off** and then says **which you'd actually pick and why**. "`Hashtable` is synchronised and `HashMap` isn't" is a recited fact. "Both are the wrong choice — if I need thread-safety I want `ConcurrentHashMap`, because `Hashtable` locks the whole table per operation while CHM locks per-bucket and gives me atomic `compute`/`merge`; `Hashtable` is safe *and* slow" is an engineer answering. Same for `ArrayList`/`LinkedList`: don't recite "array vs nodes," say "`ArrayList` always, unless I'm at a held iterator position — `LinkedList`'s O(1) insert is a lie once you count the O(n) traversal to reach the node, and its cache locality is terrible."
+**The framing that separates understanding from recall:** most of these are "difference between X and Y" questions, and the useful answer never stops at the difference — it names the **trade-off** and then says **which you'd actually pick and why**. "`Hashtable` is synchronised and `HashMap` isn't" is a fact. "Both are the wrong choice — if I need thread-safety I want `ConcurrentHashMap`, because `Hashtable` locks the whole table per operation while CHM locks per-bucket and gives me atomic `compute`/`merge`; `Hashtable` is safe *and* slow" is a decision. Same for `ArrayList`/`LinkedList`: don't recite "array vs nodes," say "`ArrayList` always, unless I'm at a held iterator position — `LinkedList`'s O(1) insert is a lie once you count the O(n) traversal to reach the node, and its cache locality is terrible."
 
 That's the whole reason this document leads with *the tell* on every section rather than just characteristics: the characteristics are the setup, the decision is the answer.
 

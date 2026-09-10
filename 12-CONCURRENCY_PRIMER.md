@@ -17,7 +17,7 @@ Contents:
 - **Part 7** — patterns for correct concurrency
 - **Part 8** — deadlock, avoided
 - **Part 9** — reasoning about, testing, and debugging concurrency
-- **Part 10** — when to use what, and the interview
+- **Part 10** — when to use what, and the questions worth being able to answer
 
 ## Symptom index
 
@@ -379,7 +379,7 @@ The consequence: concurrency correctness is a **design-time** property, establis
 
 ---
 
-# Part 10 — When to use what, and the interview
+# Part 10 — When to use what
 
 ## 10.1 Decision framework
 
@@ -391,9 +391,9 @@ The consequence: concurrency correctness is a **design-time** property, establis
 
 **D. `volatile` vs lock vs atomic.** Tell → `volatile`: publish a single flag/reference (visibility only, no compound update). Tell → atomic: lock-free read-modify-write of one value. Tell → lock: a multi-variable invariant that must update together. Default: **`volatile` for a flag, atomic for a counter, lock for an invariant across several fields.**
 
-## 10.2 The interview version
+## 10.2 The questions worth being able to answer
 
-Concurrency is a staple, and the strong answers all reduce to *understanding the model*, not reciting APIs:
+Use these as a self-check, or as the things to probe when reviewing someone else's concurrent code. Every one reduces to *understanding the model* rather than reciting APIs:
 
 - **"What's the difference between concurrency and parallelism?"** → §1.1 (dealing-with vs doing).
 - **"Why isn't `count++` thread-safe?"** → §2.1, show the read-modify-write interleaving.
@@ -402,7 +402,7 @@ Concurrency is a staple, and the strong answers all reduce to *understanding the
 - **"How do you prevent deadlock?"** → §8: break a Coffman condition; lock ordering is the practical one.
 - **"How would you make a class thread-safe?"** → §7: *first* ask if it can be immutable or confined; only then reach for synchronisation.
 
-The framing that separates a good answer: **the best answer to most "how do I make this thread-safe?" questions is "remove the shared mutable state so I don't have to."** Reaching straight for `synchronized` is the junior answer; reaching for immutability/confinement first is the senior one.
+The framing underneath all of them: **the best answer to most "how do I make this thread-safe?" questions is "remove the shared mutable state so I don't have to."** Reaching straight for `synchronized` treats the symptom; reaching for immutability or confinement first removes the problem.
 
 ---
 
