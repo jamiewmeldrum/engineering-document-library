@@ -1,6 +1,6 @@
 # The Library Index — №02
 
-*The catalogue and filing system for the engineering documentation library. **30 documents.** The JVM-stack coverage is complete; the .NET band (80–89) opened in September 2026 and is the live edge. Regenerated when documents land.*
+*The catalogue and filing system for the engineering documentation library. **31 documents.** The JVM-stack coverage is complete; the .NET band (80–89) opened in September 2026 and is the live edge. Regenerated when documents land.*
 
 ## The scheme
 
@@ -97,6 +97,7 @@ Three documents are filed by **tightest pairing rather than purist taxonomy**: *
 | № | Title | Covers |
 |---|---|---|
 | **80** | C# Threading and Asynchrony | the thread pool and starvation, `Task`, the `async`/`await` state machine, cancellation, the .NET memory model and atomics, locks and channels, parallelism, ASP.NET Core practice |
+| **81** | C# and .NET Primer | the platform and SDK, the value/reference split, boxing and equality, records and pattern matching, nullable reference types, collections and LINQ, disposal, exceptions, text and time and JSON, the toolchain |
 
 ### 90–99 · Catalogues & reference
 
@@ -121,9 +122,9 @@ Three documents are filed by **tightest pairing rather than purist taxonomy**: *
 
 **For AWS:** №54 (the services that matter and how to choose between them) paired with №91 (each service at depth), supported by №51 (networking) and №50 (containers).
 
-**For the .NET stack:** №12 (the concepts) → №80 (what .NET actually does with them) → №14 (container lifetimes, which §9.1 of №80 reads as a concurrency contract). The band is thin so far; №80 closes with the build order for the rest.
+**For the .NET stack:** №81 (the language and platform) → №80 (concurrency, which №81 deliberately excludes) → №14 (container lifetimes, which §9.1 of №80 reads as a concurrency contract and §6.5 of №81 reads as a disposal contract). Read №12 first if the concurrency concepts themselves are shaky. The band is still thin; №80 and №81 both close with the build order for the rest.
 
-**When something's broken:** most documents open with a symptom index. №52 §11 (Linux), №51 §11 (network), №57 §10 (incident response), №44 §9 (debugging method) and №80's symptom index (.NET concurrency) are the diagnostic entry points.
+**When something's broken:** most documents open with a symptom index. №52 §11 (Linux), №51 §11 (network), №57 §10 (incident response), №44 §9 (debugging method), №80's symptom index (.NET concurrency) and №81's surprise index (C# language behaviour) are the diagnostic entry points.
 
 ---
 
@@ -140,8 +141,8 @@ Three documents are filed by **tightest pairing rather than purist taxonomy**: *
 
 ## Status
 
-**30 documents.** Two meta, twenty-six subject primers, two catalogues.
+**31 documents.** Two meta, twenty-seven subject primers, two catalogues.
 
 Three originally-planned documents were **folded or dropped** rather than built: **№32 Operating Systems** (covered by №52 and №00 §1), **№45 API Design** (covered within №41 §4.4, №51 §5 and №70 §7), and **№03 Study Syllabus** (dropped as out of scope). **№01 Library Roadmap** was retired in September 2026: it was a build plan rather than a reference document, and this index carries the only part of it that was still true.
 
-The JVM-stack coverage is complete and further work there is expansion rather than gap-filling. **The live gap is the .NET band**, opened by №80 in September 2026: №81 (C# and .NET), №82 (ASP.NET Core), №83 (EF Core), №84 (Azure) and №85 (the .NET runtime) are named and unwritten, in that order of payoff. №80's "The .NET band" section states the case for each.
+The JVM-stack coverage is complete and further work there is expansion rather than gap-filling. **The live gap is the .NET band**, opened by №80 and №81 in September 2026: №82 (ASP.NET Core), №83 (EF Core), №84 (Azure) and №85 (the .NET runtime) are named and unwritten, in that order of payoff. №81's "The .NET band" section states the case for each.
